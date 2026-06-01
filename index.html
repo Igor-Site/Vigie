@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -226,18 +227,18 @@
 
   <script>
     const EQUIPEMENTS = [
-      { id: 'T1',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T2',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T3',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T4',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T5',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T6',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T7',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'T8',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
-      { id: 'OVB1', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
-      { id: 'OVB2', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
-      { id: 'OVB3', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
-      { id: 'OVB4', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
+      { id: 'T1',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T2',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T3',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T4',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T5',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T6',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T7',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'T8',   positions: ['Tête gauche', 'Tête droite', 'Pied gauche', 'Pied droit'] },
+      { id: 'OVB1', positions: ['Avant gauche', 'Avant droit', 'Arrière gauche', 'Arrière droit'] },
+      { id: 'OVB2', positions: ['Avant gauche', 'Avant droit', 'Arrière gauche', 'Arrière droit'] },
+      { id: 'OVB3', positions: ['Avant gauche', 'Avant droit', 'Arrière gauche', 'Arrière droit'] },
+      { id: 'OVB4', positions: ['Avant gauche', 'Avant droit', 'Arrière gauche', 'Arrière droit'] },
     ];
 
     const LABELS_ETAT = ['–', 'OK', '!', '✕'];
@@ -343,8 +344,8 @@
       document.getElementById('cnt-3').textContent = comptes[3];
 
       var html = '';
-      if (surveiller.length > 0) html += '<div class="anomalie-ligne"><span class="anomalie-label">Surveiller :</span><span class="anomalie-items">' + surveiller.join(' · ') + '</span></div>';
-      if (remplacer.length > 0)  html += '<div class="anomalie-ligne"><span class="anomalie-label">Remplacer :</span><span class="anomalie-items">'  + remplacer.join(' · ')  + '</span></div>';
+      if (surveiller.length > 0) html += '<div class="anomalie-ligne"><span class="anomalie-label">Surveiller :</span><span class="anomalie-items">' + surveiller.join(' · ') + '</span></div>';
+      if (remplacer.length > 0)  html += '<div class="anomalie-ligne"><span class="anomalie-label">Remplacer :</span><span class="anomalie-items">'  + remplacer.join(' · ')  + '</span></div>';
       document.getElementById('anomalies').innerHTML = html;
 
       var statut = document.getElementById('statut');
@@ -379,3 +380,4 @@
   </script>
 </body>
 </html>
+```
