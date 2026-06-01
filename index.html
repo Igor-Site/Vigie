@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Vigie</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --header-bg: #0f1923;
+      --footer-bg: #0f1923;
+      --accent: #00b4d8;
+      --ok: #22c55e;
+      --surveiller: #f59e0b;
+      --remplacer: #ef4444;
+      --sep-bg: #1e293b;
+      --ligne-pair: #ffffff;
+      --ligne-impair: #f8fafc;
+      --border: #e2e8f0;
+      --texte: #1e293b;
+      --hh: 70px;
+      --hf: 120px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f1f5f9;
+      color: var(--texte);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* EN-TÊTE */
+    #header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--hh);
+      background: var(--header-bg);
+      padding: 10px 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    #header-top { display: flex; align-items: baseline; justify-content: space-between; }
+    #titre { font-size: 1.2rem; font-weight: 800; letter-spacing: 0.18em; color: #fff; }
+    #progression-texte { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+    #prog-total { font-size: 0.8rem; font-weight: 500; color: #64748b; }
+    #barre-conteneur { height: 4px; background: #1e3a4a; border-radius: 2px; overflow: hidden; }
+    #barre-progression { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--ok)); border-radius: 2px; transition: width 0.25s; }
+
+    /* LISTE */
+    #liste {
+      position: fixed;
+      top: var(--hh);
+      bottom: var(--hf);
+      left: 0; right: 0;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: #f1f5f9;
+    }
+
+    .groupe-equipement { margin: 10px 12px 0; border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+
+    .separateur {
+      background: var(--sep-bg);
+      color: #e2e8f0;
+      font-size: 0.7rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      padding: 7px 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .separateur::after { content: ''; flex: 1; height: 1px; background: #334155; }
+
+    .ligne-graisseur {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 14px 0 16px;
+      height: 54px;
+      background: var(--ligne-pair);
+      border-bottom: 1px solid var(--border);
+    }
+    .ligne-graisseur:last-child { border-bottom: none; }
+    .ligne-graisseur:nth-child(even) { background: var(--ligne-impair); }
+
+    .libelle { font-size: 0.95rem; font-weight: 600; color: #334155; letter-spacing: 0.03em; }
+
+    .pastille-btn {
+      background: none; border: none; cursor: pointer; padding: 0;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      width: 52px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 10px;
+      transition: background 0.1s, transform 0.08s;
+    }
+    .pastille-btn:active { background: rgba(0,0,0,0.07); transform: scale(0.93); }
+
+    .pastille-visuelle {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem; font-weight: 800; color: #fff;
+      transition: background 0.15s, box-shadow 0.15s;
+    }
+    .pastille-btn[data-etat="0"] .pastille-visuelle { background: #cbd5e1; color: #64748b; }
+    .pastille-btn[data-etat="1"] .pastille-visuelle { background: var(--ok); box-shadow: 0 0 0 4px rgba(34,197,94,0.18); }
+    .pastille-btn[data-etat="2"] .pastille-visuelle { background: var(--surveiller); box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
+    .pastille-btn[data-etat="3"] .pastille-visuelle { background: var(--remplacer); box-shadow: 0 0 0 4px rgba(239,68,68,0.2); }
+
+    /* PIED DE PAGE */
+    #footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: var(--hf);
+      background: var(--footer-bg);
+      display: flex; flex-direction: column; justify-content: space-between;
+      padding: 8px 12px 10px;
+      z-index: 100;
+      border-top: 1px solid #1e3a4a;
+    }
+
+    #resume { display: flex; align-items: center; justify-content: space-between; }
+    .sep-vertical { width: 1px; height: 32px; background: #1e3a4a; flex-shrink: 0; }
+    .compteur { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    .compteur-pastille { font-size: 1rem; line-height: 1; }
+    .compteur-valeur { font-size: 1.2rem; font-weight: 800; color: #fff; line-height: 1.1; }
+    .compteur[data-etat="1"] .compteur-valeur { color: var(--ok); }
+    .compteur[data-etat="2"] .compteur-valeur { color: var(--surveiller); }
+    .compteur[data-etat="3"] .compteur-valeur { color: var(--remplacer); }
+    .compteur-label { font-size: 0.6rem; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; white-space: nowrap; }
+
+    #anomalies { font-size: 0.68rem; color: #94a3b8; line-height: 1.5; min-height: 0; }
+    #anomalies .anomalie-ligne { display: flex; align-items: baseline; gap: 5px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    #anomalies .anomalie-label { font-weight: 700; color: #94a3b8; flex-shrink: 0; }
+    #anomalies .anomalie-items { color: #e2e8f0; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+
+    #statut-ligne { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    #statut { font-size: 0.72rem; color: #64748b; font-weight: 500; }
+    #statut.termine { color: var(--ok); font-weight: 700; }
+
+    #btn-reset {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em;
+      background: transparent; color: #64748b;
+      border: 1px solid #1e3a4a; border-radius: 6px;
+      padding: 5px 12px; cursor: pointer;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+
+    /* CONFIRMATION */
+    #overlay-confirm {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 200;
+    }
+    #overlay-confirm.cache { display: none; }
+    #boite-confirm { background: #fff; border-radius: 16px; padding: 24px 20px 20px; max-width: 300px; width: 88%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    #confirm-titre { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
+    #boite-confirm p { font-size: 1rem; font-weight: 600; color: #1e293b; margin-bottom: 20px; line-height: 1.4; }
+    #confirm-boutons { display: flex; gap: 10px; }
+    #confirm-boutons button { flex: 1; padding: 13px; font-size: 0.9rem; font-weight: 700; border: none; border-radius: 10px; cursor: pointer; touch-action: manipulation; }
+    #btn-annuler { background: #f1f5f9; color: #475569; }
+    #btn-confirmer { background: var(--remplacer); color: #fff; }
+  </style>
+</head>
+<body>
+
+  <header id="header">
+    <div id="header-top">
+      <div id="titre">VIGIE</div>
+      <div id="progression-texte"><span id="nb-controles">0</span><span id="prog-total"> / 48</span></div>
+    </div>
+    <div id="barre-conteneur">
+      <div id="barre-progression"></div>
+    </div>
+  </header>
+
+  <main id="liste"></main>
+
+  <footer id="footer">
+    <div id="resume">
+      <div class="compteur" data-etat="0">
+        <div class="compteur-pastille">⚪</div>
+        <div class="compteur-valeur" id="cnt-0">48</div>
+        <div class="compteur-label">Non contrôlés</div>
+      </div>
+      <div class="sep-vertical"></div>
+      <div class="compteur" data-etat="1">
+        <div class="compteur-pastille">🟢</div>
+        <div class="compteur-valeur" id="cnt-1">0</div>
+        <div class="compteur-label">OK</div>
+      </div>
+      <div class="sep-vertical"></div>
+      <div class="compteur" data-etat="2">
+        <div class="compteur-pastille">🟡</div>
+        <div class="compteur-valeur" id="cnt-2">0</div>
+        <div class="compteur-label">Surveiller</div>
+      </div>
+      <div class="sep-vertical"></div>
+      <div class="compteur" data-etat="3">
+        <div class="compteur-pastille">🔴</div>
+        <div class="compteur-valeur" id="cnt-3">0</div>
+        <div class="compteur-label">Remplacer</div>
+      </div>
+    </div>
+
+    <div id="anomalies"></div>
+
+    <div id="statut-ligne">
+      <span id="statut">Contrôle en cours…</span>
+      <button id="btn-reset">Nouveau contrôle</button>
+    </div>
+  </footer>
+
+  <div id="overlay-confirm" class="cache">
+    <div id="boite-confirm">
+      <div id="confirm-titre">Nouveau contrôle</div>
+      <p>Remettre les 48 graisseurs à zéro ?</p>
+      <div id="confirm-boutons">
+        <button id="btn-annuler">Annuler</button>
+        <button id="btn-confirmer">Confirmer</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const EQUIPEMENTS = [
+      { id: 'T1',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T2',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T3',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T4',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T5',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T6',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T7',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'T8',   positions: ['T/G', 'T/D', 'P/G', 'P/D'] },
+      { id: 'OVB1', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
+      { id: 'OVB2', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
+      { id: 'OVB3', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
+      { id: 'OVB4', positions: ['AV/G', 'AV/D', 'AR/G', 'AR/D'] },
+    ];
+
+    const LABELS_ETAT = ['–', 'OK', '!', '✕'];
+    const CLE_STOCKAGE = 'vigie-v0';
+    let etats = {};
+
+    function cleGraisseur(equipId, pos) { return equipId + '__' + pos; }
+
+    function charger() {
+      const s = localStorage.getItem(CLE_STOCKAGE);
+      if (s) { try { etats = JSON.parse(s); } catch(e) { etats = {}; } }
+      EQUIPEMENTS.forEach(function(eq) {
+        eq.positions.forEach(function(pos) {
+          var c = cleGraisseur(eq.id, pos);
+          if (!(c in etats)) etats[c] = 0;
+        });
+      });
+    }
+
+    function sauvegarder() { localStorage.setItem(CLE_STOCKAGE, JSON.stringify(etats)); }
+
+    function reinitialiser() {
+      EQUIPEMENTS.forEach(function(eq) {
+        eq.positions.forEach(function(pos) { etats[cleGraisseur(eq.id, pos)] = 0; });
+      });
+      sauvegarder();
+      mettreAJourAffichage();
+    }
+
+    function construireListe() {
+      var liste = document.getElementById('liste');
+      liste.innerHTML = '';
+      EQUIPEMENTS.forEach(function(eq) {
+        var groupe = document.createElement('div');
+        groupe.className = 'groupe-equipement';
+
+        var sep = document.createElement('div');
+        sep.className = 'separateur';
+        sep.textContent = eq.id;
+        groupe.appendChild(sep);
+
+        eq.positions.forEach(function(pos) {
+          var cle = cleGraisseur(eq.id, pos);
+          var etatActuel = etats[cle];
+
+          var ligne = document.createElement('div');
+          ligne.className = 'ligne-graisseur';
+
+          var libelle = document.createElement('span');
+          libelle.className = 'libelle';
+          libelle.textContent = pos;
+
+          var btn = document.createElement('button');
+          btn.className = 'pastille-btn';
+          btn.dataset.cle = cle;
+          btn.dataset.etat = String(etatActuel);
+          btn.setAttribute('aria-label', eq.id + ' ' + pos);
+
+          var visuelle = document.createElement('span');
+          visuelle.className = 'pastille-visuelle';
+          visuelle.textContent = LABELS_ETAT[etatActuel];
+          btn.appendChild(visuelle);
+
+          btn.addEventListener('click', function() {
+            var nouvelEtat = (etats[cle] + 1) % 4;
+            etats[cle] = nouvelEtat;
+            btn.dataset.etat = String(nouvelEtat);
+            btn.querySelector('.pastille-visuelle').textContent = LABELS_ETAT[nouvelEtat];
+            sauvegarder();
+            mettreAJourAffichage();
+          });
+
+          ligne.appendChild(libelle);
+          ligne.appendChild(btn);
+          groupe.appendChild(ligne);
+        });
+
+        liste.appendChild(groupe);
+      });
+    }
+
+    function mettreAJourAffichage() {
+      var comptes = [0, 0, 0, 0];
+      var surveiller = [];
+      var remplacer = [];
+
+      EQUIPEMENTS.forEach(function(eq) {
+        eq.positions.forEach(function(pos) {
+          var cle = cleGraisseur(eq.id, pos);
+          var etat = etats[cle];
+          comptes[etat]++;
+          if (etat === 2) surveiller.push(eq.id + ' ' + pos);
+          if (etat === 3) remplacer.push(eq.id + ' ' + pos);
+        });
+      });
+
+      var controles = 48 - comptes[0];
+      document.getElementById('nb-controles').textContent = controles;
+      document.getElementById('barre-progression').style.width = ((controles / 48) * 100) + '%';
+      document.getElementById('cnt-0').textContent = comptes[0];
+      document.getElementById('cnt-1').textContent = comptes[1];
+      document.getElementById('cnt-2').textContent = comptes[2];
+      document.getElementById('cnt-3').textContent = comptes[3];
+
+      var html = '';
+      if (surveiller.length > 0) html += '<div class="anomalie-ligne"><span class="anomalie-label">Surveiller :</span><span class="anomalie-items">' + surveiller.join(' · ') + '</span></div>';
+      if (remplacer.length > 0)  html += '<div class="anomalie-ligne"><span class="anomalie-label">Remplacer :</span><span class="anomalie-items">'  + remplacer.join(' · ')  + '</span></div>';
+      document.getElementById('anomalies').innerHTML = html;
+
+      var statut = document.getElementById('statut');
+      if (comptes[0] === 0) {
+        statut.textContent = '✓ Contrôle terminé';
+        statut.classList.add('termine');
+      } else {
+        statut.textContent = 'Contrôle en cours…';
+        statut.classList.remove('termine');
+      }
+    }
+
+    function init() {
+      charger();
+      construireListe();
+      mettreAJourAffichage();
+
+      document.getElementById('btn-reset').addEventListener('click', function() {
+        document.getElementById('overlay-confirm').classList.remove('cache');
+      });
+      document.getElementById('btn-annuler').addEventListener('click', function() {
+        document.getElementById('overlay-confirm').classList.add('cache');
+      });
+      document.getElementById('btn-confirmer').addEventListener('click', function() {
+        document.getElementById('overlay-confirm').classList.add('cache');
+        reinitialiser();
+        construireListe();
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
