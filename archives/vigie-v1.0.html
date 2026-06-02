@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Vigie</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --dark: #0f1923;
+      --dark2: #1e293b;
+      --accent: #00b4d8;
+      --ok: #22c55e;
+      --surveiller: #f59e0b;
+      --remplacer: #ef4444;
+      --neutral: #94a3b8;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+    }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg); color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── ÉCRANS ── */
+    .screen {
+      position: fixed; inset: 0;
+      display: none; flex-direction: column;
+    }
+    .screen.active { display: flex; }
+
+    /* ── BOUTONS COMMUNS ── */
+    .btn-principal {
+      width: 100%; padding: 17px;
+      background: var(--accent); color: #fff;
+      font-size: 1rem; font-weight: 800;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      border: none; border-radius: 12px;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-principal:active { opacity: 0.85; }
+    .btn-principal.vert { background: var(--ok); }
+    .btn-principal:disabled { opacity: 0.35; cursor: default; }
+
+    .btn-texte {
+      background: none; border: none;
+      color: var(--muted); font-size: 0.85rem; font-weight: 500;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      padding: 8px; text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    /* ── HEADER INTERNE ── */
+    .i-header {
+      background: var(--dark); padding: 14px 16px 12px; flex-shrink: 0;
+    }
+    .i-header-top {
+      display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 6px;
+    }
+    .i-app-label {
+      font-size: 0.72rem; font-weight: 800;
+      letter-spacing: 0.2em; color: var(--accent); text-transform: uppercase;
+    }
+    .i-etape { font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+    .i-header h2 { font-size: 1.1rem; font-weight: 700; color: #fff; }
+
+    .i-body {
+      flex: 1; overflow-y: auto;
+      -webkit-overflow-scrolling: touch; background: var(--bg);
+    }
+    .i-footer {
+      background: var(--dark); padding: 12px 16px;
+      flex-shrink: 0; border-top: 1px solid #1e3a4a;
+    }
+
+    /* ════════════════════════════════
+       ÉCRAN 1 — ACCUEIL
+    ════════════════════════════════ */
+    #s-accueil {
+      background: var(--dark);
+      align-items: center; justify-content: center;
+      padding: 40px 24px 48px; gap: 0;
+    }
+    .a-logo {
+      font-size: 3rem; font-weight: 900;
+      letter-spacing: 0.3em; color: #fff; margin-bottom: 8px;
+    }
+    .a-tagline {
+      font-size: 0.82rem; font-weight: 500; color: var(--muted);
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 48px;
+    }
+    #bloc-reprise {
+      width: 100%; background: #1a2a38;
+      border: 1px solid #1e3a4a; border-radius: 12px;
+      padding: 16px; margin-bottom: 20px; display: none;
+    }
+    #bloc-reprise.visible { display: block; }
+    .r-head {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 3px;
+    }
+    .r-icone { font-size: 1rem; }
+    .r-titre {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent);
+    }
+    .r-sous { font-size: 0.78rem; color: #94a3b8; margin-bottom: 8px; }
+    .r-info {
+      font-size: 0.95rem; font-weight: 700; color: #fff; margin-bottom: 8px;
+    }
+    .r-barre-wrap {
+      height: 4px; background: #1e3a4a;
+      border-radius: 2px; overflow: hidden; margin-bottom: 5px;
+    }
+    .r-barre {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--ok));
+      border-radius: 2px;
+    }
+    .r-pct { font-size: 0.7rem; color: var(--muted); text-align: right; }
+
+    /* ════════════════════════════════
+       ÉCRAN 2 — EPI
+    ════════════════════════════════ */
+    #s-epi .i-body {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 28px 24px; gap: 24px;
+    }
+    .epi-intro {
+      font-size: 0.88rem; color: var(--muted);
+      text-align: center; line-height: 1.5;
+    }
+    .epi-grille {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 14px; width: 100%; max-width: 320px;
+    }
+    .epi-btn {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; padding: 20px 12px;
+      background: var(--surface); border: 2px solid var(--border);
+      border-radius: 16px; cursor: pointer;
+      touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+      min-height: 105px;
+    }
+    .epi-btn.ok { border-color: var(--ok); background: #f0fdf4; }
+    .epi-ico { font-size: 2.2rem; line-height: 1; }
+    .epi-nom {
+      font-size: 0.8rem; font-weight: 700;
+      color: var(--muted); text-align: center;
+    }
+    .epi-btn.ok .epi-nom { color: var(--ok); }
+    .epi-coche {
+      font-size: 0.78rem; color: var(--ok);
+      font-weight: 700; opacity: 0;
+    }
+    .epi-btn.ok .epi-coche { opacity: 1; }
+
+    /* ════════════════════════════════
+       ÉCRAN 3 — CONSIGNE
+    ════════════════════════════════ */
+    #s-consigne .i-body { padding: 20px 20px 24px; }
+
+    .consigne-visuel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px 16px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; min-height: 88px;
+    }
+    .cv-personne { font-size: 2.4rem; }
+    .cv-interdit { font-size: 1.5rem; }
+    .cv-tel { font-size: 1.8rem; opacity: 0.5; }
+
+    .consigne-liste {
+      list-style: none; display: flex;
+      flex-direction: column; gap: 14px;
+    }
+    .consigne-liste li {
+      display: flex; align-items: flex-start;
+      gap: 12px; font-size: 0.93rem; line-height: 1.45; color: var(--text);
+    }
+    .c-puce {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #fff;
+      font-size: 0.72rem; font-weight: 800;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+
+    /* ════════════════════════════════
+       ÉCRAN 4 — CHOIX RONDE
+    ════════════════════════════════ */
+    #s-choix .i-body { padding: 16px; }
+
+    .choix-section-lbl {
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); padding: 0 4px 8px; margin-top: 16px;
+      display: block;
+    }
+    .choix-section-lbl:first-child { margin-top: 0; }
+
+    .choix-groupe {
+      background: var(--surface); border-radius: 12px;
+      overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .choix-item {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 15px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .choix-item:last-child { border-bottom: none; }
+    .choix-item:active { background: #f8fafc; }
+    .choix-item.off { opacity: 0.4; cursor: default; pointer-events: none; }
+    .choix-gauche { display: flex; flex-direction: column; gap: 2px; }
+    .choix-nom { font-size: 0.95rem; font-weight: 700; color: var(--text); }
+    .choix-tag {
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+    }
+    .choix-tag.dispo { color: var(--ok); }
+    .choix-chevron { font-size: 1.2rem; color: var(--accent); }
+
+    .choix-placeholder {
+      background: var(--surface); border-radius: 12px;
+      padding: 20px 16px; text-align: center;
+      font-size: 0.85rem; color: var(--muted); font-style: italic;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+
+    /* ════════════════════════════════
+       ÉCRAN 5 — CONTRÔLE GUIDÉ
+    ════════════════════════════════ */
+    .ctrl-header {
+      background: var(--dark); padding: 12px 16px 10px; flex-shrink: 0;
+    }
+    .ctrl-header-top {
+      display: flex; align-items: baseline;
+      justify-content: space-between; margin-bottom: 6px;
+    }
+    .ctrl-nom {
+      font-size: 1.8rem; font-weight: 900;
+      letter-spacing: 0.08em; color: #fff;
+    }
+    .ctrl-prog {
+      font-size: 0.85rem; font-weight: 700; color: var(--accent);
+    }
+    .ctrl-barre-wrap {
+      height: 4px; background: #1e3a4a;
+      border-radius: 2px; overflow: hidden;
+    }
+    .ctrl-barre {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--ok));
+      border-radius: 2px; transition: width 0.2s;
+    }
+
+    .ctrl-body {
+      flex: 1; display: flex;
+      align-items: center; justify-content: center;
+      padding: 12px 16px; overflow: hidden;
+    }
+
+    /* Schéma tapis */
+    .schema {
+      width: 100%; max-width: 340px;
+      height: 100%; max-height: 400px;
+      display: grid;
+      grid-template-columns: 1fr 80px 1fr;
+      grid-template-rows: 28px 1fr auto 1fr 28px;
+      grid-template-areas:
+        "lbl-h  lbl-h  lbl-h"
+        "btn-hg tapis  btn-hd"
+        "lbl-g  tapis  lbl-d"
+        "btn-bg tapis  btn-bd"
+        "lbl-b  lbl-b  lbl-b";
+    }
+    .schema-lbl-h {
+      grid-area: lbl-h; align-self: start; text-align: center;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    }
+    .schema-lbl-b {
+      grid-area: lbl-b; align-self: end; text-align: center;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    }
+    .schema-lbl-g {
+      grid-area: lbl-g; text-align: center; align-self: center;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+      padding: 6px 0;
+    }
+    .schema-lbl-d {
+      grid-area: lbl-d; text-align: center; align-self: center;
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+      padding: 6px 0;
+    }
+    .schema-tapis {
+      grid-area: tapis;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--dark2); border-radius: 8px;
+      margin: 4px 0; gap: 6px;
+    }
+    .schema[data-serie="OVB"] .schema-tapis { margin: 22px 0; }
+    .tapis-fleche { font-size: 1.4rem; color: var(--accent); }
+    .tapis-texte {
+      font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase; color: #334155;
+    }
+
+    /* Boutons graisseurs */
+    .g-btn {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 6px; padding: 6px;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      background: none; border: none;
+    }
+    .g-btn[data-area="btn-hg"] { grid-area: btn-hg; justify-self: end; align-self: center; }
+    .g-btn[data-area="btn-hd"] { grid-area: btn-hd; justify-self: start; align-self: center; }
+    .g-btn[data-area="btn-bg"] { grid-area: btn-bg; justify-self: end; align-self: center; }
+    .g-btn[data-area="btn-bd"] { grid-area: btn-bd; justify-self: start; align-self: center; }
+
+    .g-cercle {
+      width: 62px; height: 62px; border-radius: 50%;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 1px; border: 3px solid transparent;
+      transition: transform 0.07s;
+    }
+    .g-btn:active .g-cercle { transform: scale(0.91); }
+
+    .g-cercle[data-etat="0"] { background: #e2e8f0; border-color: #cbd5e1; }
+    .g-cercle[data-etat="1"] { background: var(--ok); border-color: #16a34a; box-shadow: 0 0 0 4px rgba(34,197,94,0.18); }
+    .g-cercle[data-etat="2"] { background: var(--surveiller); border-color: #d97706; box-shadow: 0 0 0 4px rgba(245,158,11,0.2); }
+    .g-cercle[data-etat="3"] { background: var(--remplacer); border-color: #dc2626; box-shadow: 0 0 0 4px rgba(239,68,68,0.2); }
+
+    .g-etat-txt {
+      font-size: 0.7rem; font-weight: 800;
+      color: #fff; letter-spacing: 0.03em; line-height: 1;
+    }
+    .g-cercle[data-etat="0"] .g-etat-txt { color: #94a3b8; }
+
+    .g-pos-lbl {
+      font-size: 0.68rem; font-weight: 700;
+      color: var(--muted); text-align: center;
+    }
+
+    /* Footer nav */
+    .ctrl-footer {
+      background: var(--dark); padding: 12px 16px;
+      flex-shrink: 0; border-top: 1px solid #1e3a4a;
+      display: flex; gap: 12px;
+    }
+    .btn-nav {
+      flex: 1; padding: 14px;
+      font-size: 0.9rem; font-weight: 700;
+      letter-spacing: 0.05em;
+      border: none; border-radius: 10px;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-nav:active { opacity: 0.85; }
+    .btn-prev {
+      background: #1e293b; color: #94a3b8;
+      border: 1px solid #334155;
+    }
+    .btn-prev:disabled { opacity: 0.25; cursor: default; }
+    .btn-suiv { background: var(--accent); color: #fff; }
+    .btn-suiv.fin { background: var(--ok); }
+
+    /* ════════════════════════════════
+       ÉCRAN 6 — RÉSUMÉ
+    ════════════════════════════════ */
+    #s-resume .i-body { padding: 16px; }
+
+    .res-compteurs {
+      display: flex; gap: 10px; margin-bottom: 4px;
+    }
+    .res-compteur {
+      flex: 1; background: var(--surface);
+      border-radius: 12px; padding: 14px 6px;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .res-ico { font-size: 1.1rem; }
+    .res-val {
+      font-size: 1.55rem; font-weight: 900; line-height: 1;
+    }
+    .res-compteur.ok .res-val { color: var(--ok); }
+    .res-compteur.sv .res-val { color: var(--surveiller); }
+    .res-compteur.rp .res-val { color: var(--remplacer); }
+    .res-compteur.nc .res-val { color: #94a3b8; }
+    .res-lbl {
+      font-size: 0.58rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: var(--muted); text-align: center;
+    }
+
+    .res-section-lbl {
+      font-size: 0.63rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted); padding: 14px 4px 8px; display: block;
+    }
+    .res-liste {
+      background: var(--surface); border-radius: 12px;
+      overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.07);
+    }
+    .res-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      font-size: 0.9rem; font-weight: 600;
+    }
+    .res-item:last-child { border-bottom: none; }
+    .res-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .res-dot.sv { background: var(--surveiller); }
+    .res-dot.rp { background: var(--remplacer); }
+    .res-vide {
+      padding: 16px; text-align: center;
+      color: var(--muted); font-size: 0.85rem; font-style: italic;
+    }
+
+    .res-footer {
+      background: var(--dark); padding: 12px 16px;
+      flex-shrink: 0; border-top: 1px solid #1e3a4a;
+      display: flex; gap: 12px;
+    }
+    .btn-export {
+      flex: 1; padding: 14px;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 0.05em;
+      background: #1e293b; color: #fff;
+      border: 1px solid #334155; border-radius: 10px;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-export:active { opacity: 0.85; }
+    .btn-nlle-ronde {
+      flex: 1; padding: 14px;
+      font-size: 0.88rem; font-weight: 700; letter-spacing: 0.05em;
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 10px;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn-nlle-ronde:active { opacity: 0.85; }
+
+    /* ── MODALE ── */
+    #overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: flex; align-items: center;
+      justify-content: center; z-index: 500; padding: 24px;
+    }
+    #overlay.off { display: none; }
+    .modale {
+      background: var(--surface); border-radius: 16px;
+      padding: 24px 20px 20px; max-width: 320px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    .m-titre {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #94a3b8; margin-bottom: 8px;
+    }
+    .m-msg {
+      font-size: 1rem; font-weight: 600;
+      color: var(--text); margin-bottom: 5px; line-height: 1.4;
+    }
+    .m-detail {
+      font-size: 0.82rem; color: var(--muted); margin-bottom: 20px;
+    }
+    .m-btns { display: flex; gap: 10px; }
+    .m-btns button {
+      flex: 1; padding: 13px;
+      font-size: 0.9rem; font-weight: 700;
+      border: none; border-radius: 10px;
+      cursor: pointer; touch-action: manipulation;
+    }
+    .m-annuler { background: #f1f5f9; color: #475569; }
+    .m-ok { background: var(--remplacer); color: #fff; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 96px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--dark2); color: #fff;
+      font-size: 0.85rem; font-weight: 600;
+      padding: 10px 20px; border-radius: 24px;
+      z-index: 600; opacity: 0;
+      transition: opacity 0.2s; pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.on { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════
+     ÉCRAN 1 — ACCUEIL
+══════════════════════════════════ -->
+<div id="s-accueil" class="screen active">
+  <div class="a-logo">VIGIE</div>
+  <div class="a-tagline">Assistant de ronde terrain</div>
+
+  <div id="bloc-reprise">
+    <div class="r-head">
+      <span class="r-icone" id="r-icone">🔄</span>
+      <span class="r-titre" id="r-titre">Ronde en cours</span>
+    </div>
+    <div class="r-sous">Graisseurs automatiques</div>
+    <div class="r-info" id="r-info"></div>
+    <div class="r-barre-wrap">
+      <div class="r-barre" id="r-barre" style="width:0%"></div>
+    </div>
+    <div class="r-pct" id="r-pct"></div>
+  </div>
+
+  <button class="btn-principal" id="btn-a-principal"></button>
+  <button class="btn-texte" id="btn-a-secondaire"></button>
+</div>
+
+<!-- ══════════════════════════════════
+     ÉCRAN 2 — EPI
+══════════════════════════════════ -->
+<div id="s-epi" class="screen">
+  <div class="i-header">
+    <div class="i-header-top">
+      <span class="i-app-label">VIGIE</span>
+      <span class="i-etape">Étape 1 / 3</span>
+    </div>
+    <h2>Vérification des EPI</h2>
+  </div>
+  <div class="i-body">
+    <p class="epi-intro">Vérifiez et validez chaque équipement de protection avant de commencer.</p>
+    <div class="epi-grille">
+      <button class="epi-btn" data-epi="casque">
+        <span class="epi-ico">⛑️</span>
+        <span class="epi-nom">Casque</span>
+        <span class="epi-coche">✓ Validé</span>
+      </button>
+      <button class="epi-btn" data-epi="lunettes">
+        <span class="epi-ico">🥽</span>
+        <span class="epi-nom">Lunettes</span>
+        <span class="epi-coche">✓ Validé</span>
+      </button>
+      <button class="epi-btn" data-epi="gants">
+        <span class="epi-ico">🧤</span>
+        <span class="epi-nom">Gants</span>
+        <span class="epi-coche">✓ Validé</span>
+      </button>
+      <button class="epi-btn" data-epi="masque">
+        <span class="epi-ico">😷</span>
+        <span class="epi-nom">Masque</span>
+        <span class="epi-coche">✓ Validé</span>
+      </button>
+    </div>
+  </div>
+  <div class="i-footer">
+    <button class="btn-principal" id="btn-epi-suiv" disabled>Suivant</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ÉCRAN 3 — CONSIGNE
+══════════════════════════════════ -->
+<div id="s-consigne" class="screen">
+  <div class="i-header">
+    <div class="i-header-top">
+      <span class="i-app-label">VIGIE</span>
+      <span class="i-etape">Étape 2 / 3</span>
+    </div>
+    <h2>Consigne de sécurité</h2>
+  </div>
+  <div class="i-body">
+    <div class="consigne-visuel">
+      <span class="cv-personne">🚶</span>
+      <span class="cv-interdit">🚫</span>
+      <span class="cv-tel">📱</span>
+    </div>
+    <ul class="consigne-liste">
+      <li><span class="c-puce">1</span>Gardez les yeux sur votre environnement pendant vos déplacements.</li>
+      <li><span class="c-puce">2</span>N'utilisez jamais ce support en marchant.</li>
+      <li><span class="c-puce">3</span>Arrêtez-vous avant toute saisie.</li>
+      <li><span class="c-puce">4</span>Respectez les cheminements balisés.</li>
+    </ul>
+  </div>
+  <div class="i-footer">
+    <button class="btn-principal" id="btn-consigne-ok">J'AI COMPRIS</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ÉCRAN 4 — CHOIX RONDE
+══════════════════════════════════ -->
+<div id="s-choix" class="screen">
+  <div class="i-header">
+    <div class="i-header-top">
+      <span class="i-app-label">VIGIE</span>
+      <span class="i-etape">Étape 3 / 3</span>
+    </div>
+    <h2>Choix de la ronde</h2>
+  </div>
+  <div class="i-body">
+    <span class="choix-section-lbl">Installation en marche</span>
+    <div class="choix-groupe">
+      <div class="choix-item" id="choix-graisseurs">
+        <div class="choix-gauche">
+          <span class="choix-nom">Graisseurs automatiques</span>
+          <span class="choix-tag dispo">Disponible</span>
+        </div>
+        <span class="choix-chevron">›</span>
+      </div>
+      <div class="choix-item off">
+        <div class="choix-gauche">
+          <span class="choix-nom">Usure tapis</span>
+          <span class="choix-tag">À venir</span>
+        </div>
+        <span class="choix-chevron">›</span>
+      </div>
+      <div class="choix-item off">
+        <div class="choix-gauche">
+          <span class="choix-nom">Racleurs</span>
+          <span class="choix-tag">À venir</span>
+        </div>
+        <span class="choix-chevron">›</span>
+      </div>
+    </div>
+    <span class="choix-section-lbl">Installation à l'arrêt</span>
+    <div class="choix-placeholder">Fonctionnalité à venir</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ÉCRAN 5 — CONTRÔLE GUIDÉ
+══════════════════════════════════ -->
+<div id="s-controle" class="screen">
+  <div class="ctrl-header">
+    <div class="ctrl-header-top">
+      <span class="ctrl-nom" id="ctrl-nom"></span>
+      <span class="ctrl-prog" id="ctrl-prog"></span>
+    </div>
+    <div class="ctrl-barre-wrap">
+      <div class="ctrl-barre" id="ctrl-barre" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="ctrl-body">
+    <div class="schema" id="schema">
+      <div class="schema-lbl-h" id="schema-lbl-h"></div>
+      <div class="schema-lbl-g">Gauche</div>
+      <div class="schema-tapis">
+        <div class="tapis-fleche">↑</div>
+        <div class="tapis-texte">Tapis</div>
+      </div>
+      <div class="schema-lbl-d">Droite</div>
+      <div class="schema-lbl-b" id="schema-lbl-b"></div>
+      <!-- Les 4 boutons graisseurs sont injectés par JS -->
+    </div>
+  </div>
+  <div class="ctrl-footer">
+    <button class="btn-nav btn-prev" id="btn-prev">‹ Précédent</button>
+    <button class="btn-nav btn-suiv" id="btn-suiv">Suivant ›</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     ÉCRAN 6 — RÉSUMÉ
+══════════════════════════════════ -->
+<div id="s-resume" class="screen">
+  <div class="i-header">
+    <div class="i-header-top">
+      <span class="i-app-label">VIGIE</span>
+      <span id="resume-date" style="font-size:0.7rem;color:#64748b;"></span>
+    </div>
+    <h2>Résumé du contrôle</h2>
+  </div>
+  <div class="i-body" id="resume-body"></div>
+  <div class="res-footer">
+    <button class="btn-export" id="btn-export">Exporter</button>
+    <button class="btn-nlle-ronde" id="btn-nlle-ronde">Nouvelle ronde</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     MODALE CONFIRMATION
+══════════════════════════════════ -->
+<div id="overlay" class="off">
+  <div class="modale">
+    <div class="m-titre" id="m-titre"></div>
+    <div class="m-msg" id="m-msg"></div>
+    <div class="m-detail" id="m-detail"></div>
+    <div class="m-btns">
+      <button class="m-annuler" id="m-annuler">Annuler</button>
+      <button class="m-ok" id="m-ok"></button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   DONNÉES
+============================================================ */
+var EQ = [
+  { id:'T1',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T2',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T3',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T4',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T5',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T6',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T7',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'T8',   serie:'T',   lh:'TÊTE',  lb:'PIED',    pos:['TG','TD','PG','PD'],    ll:['Tête gauche','Tête droite','Pied gauche','Pied droit'] },
+  { id:'OVB1', serie:'OVB', lh:'AVANT', lb:'ARRIÈRE', pos:['AVG','AVD','ARG','ARD'], ll:['Avant gauche','Avant droit','Arrière gauche','Arrière droit'] },
+  { id:'OVB2', serie:'OVB', lh:'AVANT', lb:'ARRIÈRE', pos:['AVG','AVD','ARG','ARD'], ll:['Avant gauche','Avant droit','Arrière gauche','Arrière droit'] },
+  { id:'OVB3', serie:'OVB', lh:'AVANT', lb:'ARRIÈRE', pos:['AVG','AVD','ARG','ARD'], ll:['Avant gauche','Avant droit','Arrière gauche','Arrière droit'] },
+  { id:'OVB4', serie:'OVB', lh:'AVANT', lb:'ARRIÈRE', pos:['AVG','AVD','ARG','ARD'], ll:['Avant gauche','Avant droit','Arrière gauche','Arrière droit'] }
+];
+var TOTAL = 48;
+var AREAS = ['btn-hg','btn-hd','btn-bg','btn-bd'];
+var ETATS_COURT = ['–','OK','!','✕'];
+var K_ETATS = 'vigie-v1-etats';
+var K_RONDE = 'vigie-v1-ronde';
+
+var etats = {};
+var idxCourant = 0;
+var cbConfirm = null;
+
+/* ============================================================
+   STORAGE
+============================================================ */
+function cle(id, pos) { return id + '__' + pos; }
+
+function charger() {
+  var s = localStorage.getItem(K_ETATS);
+  if (s) { try { etats = JSON.parse(s); } catch(e) { etats = {}; } }
+  EQ.forEach(function(eq) {
+    eq.pos.forEach(function(p) {
+      var k = cle(eq.id, p);
+      if (!(k in etats)) etats[k] = 0;
+    });
+  });
+}
+
+function sauvegarder() {
+  localStorage.setItem(K_ETATS, JSON.stringify(etats));
+  localStorage.setItem(K_RONDE, 'graisseurs');
+}
+
+function effacer() {
+  localStorage.removeItem(K_ETATS);
+  localStorage.removeItem(K_RONDE);
+  etats = {};
+  EQ.forEach(function(eq) {
+    eq.pos.forEach(function(p) { etats[cle(eq.id, p)] = 0; });
+  });
+}
+
+function rondeEnCours() {
+  return localStorage.getItem(K_RONDE) === 'graisseurs';
+}
+
+/* ============================================================
+   CALCULS
+============================================================ */
+function nbControles() {
+  var n = 0;
+  EQ.forEach(function(eq) {
+    eq.pos.forEach(function(p) { if (etats[cle(eq.id, p)] !== 0) n++; });
+  });
+  return n;
+}
+
+function eqComplet(eq) {
+  return eq.pos.every(function(p) { return etats[cle(eq.id, p)] !== 0; });
+}
+
+function premierIncomplet() {
+  for (var i = 0; i < EQ.length; i++) {
+    if (!eqComplet(EQ[i])) return i;
+  }
+  return -1;
+}
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s) {
+    s.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+/* ============================================================
+   MODALE
+============================================================ */
+function confirm(titre, msg, detail, lbl, cb) {
+  document.getElementById('m-titre').textContent = titre;
+  document.getElementById('m-msg').textContent = msg;
+  document.getElementById('m-detail').textContent = detail;
+  document.getElementById('m-ok').textContent = lbl;
+  cbConfirm = cb;
+  document.getElementById('overlay').classList.remove('off');
+}
+
+document.getElementById('m-annuler').addEventListener('click', function() {
+  document.getElementById('overlay').classList.add('off');
+  cbConfirm = null;
+});
+document.getElementById('m-ok').addEventListener('click', function() {
+  document.getElementById('overlay').classList.add('off');
+  if (cbConfirm) { var cb = cbConfirm; cbConfirm = null; cb(); }
+});
+
+/* ============================================================
+   TOAST
+============================================================ */
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('on');
+  setTimeout(function() { t.classList.remove('on'); }, 2200);
+}
+
+/* ============================================================
+   ÉCRAN 1 — ACCUEIL
+============================================================ */
+function initAccueil() {
+  var ctrl = nbControles();
+  var pct = Math.round((ctrl / TOTAL) * 100);
+  var idx = premierIncomplet();
+  var bloc = document.getElementById('bloc-reprise');
+  var btnP = document.getElementById('btn-a-principal');
+  var btnS = document.getElementById('btn-a-secondaire');
+
+  if (rondeEnCours()) {
+    bloc.classList.add('visible');
+    document.getElementById('r-barre').style.width = pct + '%';
+    document.getElementById('r-pct').textContent = pct + ' %';
+
+    if (idx === -1) {
+      document.getElementById('r-icone').textContent = '✓';
+      document.getElementById('r-titre').textContent = 'Ronde terminée';
+      document.getElementById('r-info').textContent = TOTAL + ' / ' + TOTAL + ' contrôlés';
+      btnP.textContent = 'VOIR LE RÉSUMÉ';
+      btnP.className = 'btn-principal vert';
+      btnP.onclick = function() { initResume(); showScreen('s-resume'); };
+      btnS.textContent = 'Commencer une nouvelle ronde';
+      btnS.onclick = function() {
+        confirm('Nouvelle ronde', 'Commencer une nouvelle ronde ?',
+          'Les ' + TOTAL + ' graisseurs contrôlés seront effacés.',
+          'Recommencer', function() { effacer(); initAccueil(); });
+      };
+    } else {
+      var cible = EQ[idx].id;
+      document.getElementById('r-icone').textContent = '🔄';
+      document.getElementById('r-titre').textContent = 'Ronde en cours';
+      document.getElementById('r-info').textContent =
+        'Reprise à : ' + cible + '  •  ' + ctrl + ' / ' + TOTAL + ' contrôlés';
+      btnP.textContent = 'REPRENDRE LA RONDE';
+      btnP.className = 'btn-principal';
+      btnP.onclick = function() {
+        idxCourant = idx;
+        afficherEq(idxCourant);
+        showScreen('s-controle');
+      };
+      btnS.textContent = 'Recommencer depuis le début';
+      btnS.onclick = function() {
+        confirm('Recommencer', 'Abandonner la ronde en cours ?',
+          ctrl + ' graisseur' + (ctrl > 1 ? 's' : '') + ' déjà contrôlé' + (ctrl > 1 ? 's' : '') + ' seront perdus.',
+          'Recommencer', function() { effacer(); initAccueil(); });
+      };
+    }
+  } else {
+    bloc.classList.remove('visible');
+    btnP.textContent = 'COMMENCER LA RONDE';
+    btnP.className = 'btn-principal';
+    btnP.onclick = function() { initEPI(); showScreen('s-epi'); };
+    btnS.textContent = '';
+    btnS.onclick = null;
+  }
+}
+
+/* ============================================================
+   ÉCRAN 2 — EPI
+============================================================ */
+function initEPI() {
+  document.querySelectorAll('.epi-btn').forEach(function(b) {
+    b.classList.remove('ok');
+  });
+  majBtnEPI();
+}
+
+function majBtnEPI() {
+  var total = document.querySelectorAll('.epi-btn').length;
+  var ok = document.querySelectorAll('.epi-btn.ok').length;
+  var btn = document.getElementById('btn-epi-suiv');
+  btn.disabled = ok < total;
+}
+
+document.querySelectorAll('.epi-btn').forEach(function(b) {
+  b.addEventListener('click', function() {
+    b.classList.toggle('ok');
+    majBtnEPI();
+  });
+});
+
+document.getElementById('btn-epi-suiv').addEventListener('click', function() {
+  showScreen('s-consigne');
+});
+
+/* ============================================================
+   ÉCRAN 3 — CONSIGNE
+============================================================ */
+document.getElementById('btn-consigne-ok').addEventListener('click', function() {
+  showScreen('s-choix');
+});
+
+/* ============================================================
+   ÉCRAN 4 — CHOIX RONDE
+============================================================ */
+document.getElementById('choix-graisseurs').addEventListener('click', function() {
+  idxCourant = 0;
+  afficherEq(0);
+  showScreen('s-controle');
+});
+
+/* ============================================================
+   ÉCRAN 5 — CONTRÔLE GUIDÉ
+============================================================ */
+function afficherEq(idx) {
+  var eq = EQ[idx];
+  var ctrl = nbControles();
+
+  // Header
+  document.getElementById('ctrl-nom').textContent = eq.id;
+  document.getElementById('ctrl-prog').textContent = ctrl + ' / ' + TOTAL;
+  document.getElementById('ctrl-barre').style.width = ((ctrl / TOTAL) * 100) + '%';
+
+  // Labels tapis
+  document.getElementById('schema-lbl-h').textContent = eq.lh;
+  document.getElementById('schema-lbl-b').textContent = eq.lb;
+  document.getElementById('schema').dataset.serie = eq.serie;
+
+  // Supprimer anciens boutons
+  var schema = document.getElementById('schema');
+  schema.querySelectorAll('.g-btn').forEach(function(b) { b.remove(); });
+
+  // Créer 4 boutons
+  eq.pos.forEach(function(pos, i) {
+    var k = cle(eq.id, pos);
+
+    var btn = document.createElement('button');
+    btn.className = 'g-btn';
+    btn.setAttribute('data-area', AREAS[i]);
+    btn.style.gridArea = AREAS[i];
+
+    var cercle = document.createElement('div');
+    cercle.className = 'g-cercle';
+    cercle.setAttribute('data-etat', String(etats[k]));
+
+    var txt = document.createElement('span');
+    txt.className = 'g-etat-txt';
+    txt.textContent = ETATS_COURT[etats[k]];
+
+    cercle.appendChild(txt);
+
+    btn.appendChild(cercle);
+
+    (function(k2, cercle2, txt2) {
+      btn.addEventListener('click', function() {
+        var e = (etats[k2] + 1) % 4;
+        etats[k2] = e;
+        cercle2.setAttribute('data-etat', String(e));
+        txt2.textContent = ETATS_COURT[e];
+        sauvegarder();
+        var c2 = nbControles();
+        document.getElementById('ctrl-prog').textContent = c2 + ' / ' + TOTAL;
+        document.getElementById('ctrl-barre').style.width = ((c2 / TOTAL) * 100) + '%';
+      });
+    })(k, cercle, txt);
+
+    schema.appendChild(btn);
+  });
+
+  // Nav buttons
+  var btnPrev = document.getElementById('btn-prev');
+  var btnSuiv = document.getElementById('btn-suiv');
+  btnPrev.disabled = (idx === 0);
+  var dernier = (idx === EQ.length - 1);
+  btnSuiv.textContent = dernier ? 'Terminer ›' : 'Suivant ›';
+  btnSuiv.className = 'btn-nav btn-suiv' + (dernier ? ' fin' : '');
+}
+
+document.getElementById('btn-prev').addEventListener('click', function() {
+  if (idxCourant > 0) { idxCourant--; afficherEq(idxCourant); }
+});
+
+document.getElementById('btn-suiv').addEventListener('click', function() {
+  if (idxCourant < EQ.length - 1) {
+    idxCourant++;
+    afficherEq(idxCourant);
+  } else {
+    initResume();
+    showScreen('s-resume');
+  }
+});
+
+/* ============================================================
+   ÉCRAN 6 — RÉSUMÉ
+============================================================ */
+function initResume() {
+  var sv = [], rp = [], ncListe = [], ok = 0;
+  EQ.forEach(function(eq) {
+    eq.pos.forEach(function(p, i) {
+      var e = etats[cle(eq.id, p)];
+      if (e === 0) ncListe.push(eq.id + ' — ' + eq.ll[i]);
+      else if (e === 1) ok++;
+      else if (e === 2) sv.push(eq.id + ' — ' + eq.ll[i]);
+      else if (e === 3) rp.push(eq.id + ' — ' + eq.ll[i]);
+    });
+  });
+  var nc = ncListe.length;
+
+  var now = new Date();
+  document.getElementById('resume-date').textContent =
+    now.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  var html = '<div class="res-compteurs">';
+  html += '<div class="res-compteur ok"><span class="res-ico">🟢</span><span class="res-val">' + ok + '</span><span class="res-lbl">OK</span></div>';
+  html += '<div class="res-compteur sv"><span class="res-ico">🟡</span><span class="res-val">' + sv.length + '</span><span class="res-lbl">Surveiller</span></div>';
+  html += '<div class="res-compteur rp"><span class="res-ico">🔴</span><span class="res-val">' + rp.length + '</span><span class="res-lbl">Remplacer</span></div>';
+  if (nc > 0) {
+    html += '<div class="res-compteur nc"><span class="res-ico">⚪</span><span class="res-val">' + nc + '</span><span class="res-lbl">Non ctrl.</span></div>';
+  }
+  html += '</div>';
+
+  if (rp.length > 0) {
+    html += '<span class="res-section-lbl">À remplacer</span><div class="res-liste">';
+    rp.forEach(function(it) { html += '<div class="res-item"><span class="res-dot rp"></span>' + it + '</div>'; });
+    html += '</div>';
+  }
+  if (sv.length > 0) {
+    html += '<span class="res-section-lbl">À surveiller</span><div class="res-liste">';
+    sv.forEach(function(it) { html += '<div class="res-item"><span class="res-dot sv"></span>' + it + '</div>'; });
+    html += '</div>';
+  }
+  if (nc > 0) {
+    html += '<span class="res-section-lbl">Non contrôlés</span><div class="res-liste">';
+    ncListe.forEach(function(it) { html += '<div class="res-item"><span class="res-dot" style="background:#94a3b8"></span>' + it + '</div>'; });
+    html += '</div>';
+  }
+  if (rp.length === 0 && sv.length === 0 && nc === 0) {
+    html += '<div class="res-vide" style="margin-top:24px;">✓ Aucune anomalie détectée.</div>';
+  }
+
+  document.getElementById('resume-body').innerHTML = html;
+}
+
+/* ============================================================
+   EXPORT
+============================================================ */
+function texteExport() {
+  var sv = [], rp = [], ncListe = [], ok = 0;
+  EQ.forEach(function(eq) {
+    eq.pos.forEach(function(p, i) {
+      var e = etats[cle(eq.id, p)];
+      if (e === 0) ncListe.push(eq.id + ' — ' + eq.ll[i]);
+      else if (e === 1) ok++;
+      else if (e === 2) sv.push(eq.id + ' — ' + eq.ll[i]);
+      else if (e === 3) rp.push(eq.id + ' — ' + eq.ll[i]);
+    });
+  });
+  var d = new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  var lignes = ['Contrôle graisseurs automatiques', d, ''];
+  if (rp.length > 0) { lignes.push('🔴 À remplacer'); rp.forEach(function(l) { lignes.push(l); }); lignes.push(''); }
+  if (sv.length > 0) { lignes.push('🟡 À surveiller'); sv.forEach(function(l) { lignes.push(l); }); lignes.push(''); }
+  if (ncListe.length > 0) { lignes.push('⚪ Non contrôlés'); ncListe.forEach(function(l) { lignes.push(l); }); lignes.push(''); }
+  lignes.push('🟢 OK');
+  lignes.push(ok + ' graisseur' + (ok > 1 ? 's' : ''));
+  return lignes.join('\n');
+}
+
+document.getElementById('btn-export').addEventListener('click', function() {
+  var txt = texteExport();
+  if (navigator.share) {
+    navigator.share({ title: 'Vigie — Contrôle graisseurs', text: txt }).catch(function() {});
+  } else {
+    navigator.clipboard.writeText(txt).then(function() {
+      toast('Copié dans le presse-papiers');
+    }).catch(function() {
+      toast('Impossible de copier');
+    });
+  }
+});
+
+document.getElementById('btn-nlle-ronde').addEventListener('click', function() {
+  var ctrl = nbControles();
+  confirm('Nouvelle ronde', 'Commencer une nouvelle ronde ?',
+    ctrl + ' graisseur' + (ctrl > 1 ? 's' : '') + ' contrôlé' + (ctrl > 1 ? 's' : '') + ' seront effacés.',
+    'Recommencer', function() {
+      effacer();
+      initAccueil();
+      showScreen('s-accueil');
+    });
+});
+
+/* ============================================================
+   INIT
+============================================================ */
+charger();
+initAccueil();
+</script>
+</body>
+</html>
